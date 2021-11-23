@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class AnimatorAction : AnimationActionBase
+public abstract class AnimatorAction : AnimationAction
 {
     [SerializeField] private string propertyName;
 

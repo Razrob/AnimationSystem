@@ -8,22 +8,26 @@ using System.Reflection;
 using UnityEditorInternal;
 using System.IO;
 
-[CustomPropertyDrawer(typeof(AnimationActionBase), true)]
+[CustomPropertyDrawer(typeof(AnimationAction), true)]
 public class AnimationActionDrawer : PropertyDrawer
-{ 
-    private bool show;
+{
+    private bool expandProperty;
     private int fieldCount;
-    private int selectedTypeIndex;
+    private bool inited;
 
-    private const string actionsPath = "AnimationActions";
+    private int selectedTypeIndex;
 
     private Type[] actionsTypes;
 
-    private Type GetTargetType(object property)
-    {
-        if(actionsTypes == null)
-            actionsTypes = typeof(AnimationActionBase).Assembly.GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(AnimationActionBase))).ToArray();
+    //private const string actionsPath = "Source/Scripts/AnimationsActions";
+    private const string actionsPath = "AnimationActions";
 
+    private const float FieldHeight = 18;
+    private const float PropertyHeight = 20;
+    private const float ClosePropertyHeight = 40;
+
+    private Type GetTargetSerializedType(object property)
+    {
         for (int i = 0; i < actionsTypes.Length; i++)
         {
             try
@@ -37,82 +41,104 @@ public class AnimationActionDrawer : PropertyDrawer
         throw new KeyNotFoundException();
     }
 
-    private string CreateAction(Type type)
+    private UnityEngine.Object CreateAction(Type type)
     {
-        AnimationActionBase action = ScriptableObject.CreateInstance(type) as AnimationActionBase;
+        AnimationAction action = ScriptableObject.CreateInstance(type) as AnimationAction;
 
         string fileName = type.Name;
         int fileCount = 0;
-        while(File.Exists($"{Application.dataPath}/{actionsPath}/{fileName}.asset"))
-        {
-            fileCount++;
-            fileName += fileCount.ToString();
-        }
+        while (File.Exists($"{Application.dataPath}/{actionsPath}/{fileName}.asset"))
+            fileName += (++fileCount).ToString();
 
         AssetDatabase.CreateAsset(action, $"Assets/{actionsPath}/{fileName}.asset");
-        return $"Assets/{actionsPath}/{fileName}.asset";
+        return action;
     }
 
     private int DrawPopup(Rect position)
     {
+        position.x += 7;
+        List<string> typesNames = actionsTypes.Select(type => type.Name).ToList();
+        typesNames.Insert(0, "Not specified");
+        return EditorGUI.Popup(position, selectedTypeIndex + 1, typesNames.ToArray()) - 1;
+    }
+
+    private void TryFindActionTypes()
+    {
         if (actionsTypes == null)
-            actionsTypes = typeof(AnimationActionBase).Assembly.GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(AnimationActionBase))).ToArray();
-        List<string> types = actionsTypes.Select(type => type.Name).ToList();
-        types.Insert(0, "Not specified");
-        return EditorGUI.Popup(position, selectedTypeIndex, types.ToArray());
+            actionsTypes = typeof(AnimationAction).Assembly.GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(AnimationAction))).ToArray();
+    }
+
+    private void TryInitialize(UnityEngine.Object property, Type targetType)
+    {
+        if (inited) return;
+
+        inited = true;
+        if (property != null)
+            selectedTypeIndex = actionsTypes.ToList().IndexOf(targetType);
+    }
+
+    private void ReplaceAction(SerializedProperty property)
+    {
+        UnityEngine.Object createdAction = CreateAction(actionsTypes[selectedTypeIndex]);
+        
+        if (property.objectReferenceValue != null)
+            NullifyAction(property);
+        property.objectReferenceValue = createdAction;
+    }
+
+    private void NullifyAction(SerializedProperty property)
+    {
+        AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(property.objectReferenceValue));
+        property.objectReferenceValue = null;
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
+        TryFindActionTypes();
+
         EditorGUI.BeginProperty(position, label, property);
+        Type targetType = GetTargetSerializedType(property.objectReferenceValue);
 
-        Type type = GetTargetType(property.objectReferenceValue);
-        if (property.objectReferenceValue != null) selectedTypeIndex = actionsTypes.ToList().IndexOf(type) + 1;
-        else selectedTypeIndex = 0;
-        position.height = 18;
-        EditorGUI.indentLevel--;
-        int newIndex = DrawPopup(position);
+        TryInitialize(property.objectReferenceValue, targetType);
+
         if (property.objectReferenceValue == null)
-            property.objectReferenceValue = null;
-
-        if(newIndex == 0 && property.objectReferenceValue != null)
         {
-            selectedTypeIndex = newIndex;
-            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(property.objectReferenceValue));
             property.objectReferenceValue = null;
+            selectedTypeIndex = -1;
         }
-        else if(newIndex != selectedTypeIndex)
-        {
-            selectedTypeIndex = newIndex;
-            string path = CreateAction(actionsTypes[selectedTypeIndex - 1]);
-            if(property.objectReferenceValue != null) AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(property.objectReferenceValue));
+        position.height = FieldHeight;
+        EditorGUI.indentLevel--;
+        int newTypeIndex = DrawPopup(position);
 
-            UnityEngine.Object action = AssetDatabase.LoadAssetAtPath(path, actionsTypes[selectedTypeIndex - 1]);
-            property.objectReferenceValue = action;
+        if (selectedTypeIndex != newTypeIndex)
+        {
+            selectedTypeIndex = newTypeIndex;
+
+            if (selectedTypeIndex > -1) ReplaceAction(property);
+            else NullifyAction(property);
         }
 
+        position.y += PropertyHeight;
 
-        position.y += 20;
-
-        show = EditorGUI.BeginFoldoutHeaderGroup(new Rect(position.x, position.y, 
-            EditorGUIUtility.currentViewWidth * 0.22f * Mathf.Pow(EditorGUIUtility.currentViewWidth / 500, 0.5f), position.height), show, new GUIContent("Show"));
-        EditorGUI.PropertyField(position, property, new GUIContent(" "));
         EditorGUI.indentLevel++;
 
-        if (show && property.objectReferenceValue == null)
-            show = false;
+        expandProperty = EditorGUI.BeginFoldoutHeaderGroup(new Rect(position.x, position.y,
+            EditorGUIUtility.currentViewWidth * 0.2f * Mathf.Pow(EditorGUIUtility.currentViewWidth / 500, 0.5f), position.height), expandProperty, new GUIContent("Show"));
+        EditorGUI.PropertyField(position, property, new GUIContent(" "));
 
-        if (show && property.objectReferenceValue != null)
+        if (property.objectReferenceValue == null) expandProperty = false;
+
+        if (expandProperty && property.objectReferenceValue != null)
         {
             SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue);
             serializedObject.Update();
 
-            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo[] fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             fieldCount = fields.Length;
 
-            for(int i = 0; i < fields.Length; i++)
+            for (int i = 0; i < fields.Length; i++)
             {
-                position.y += 20;
+                position.y += PropertyHeight;
                 EditorGUI.PropertyField(position, serializedObject.FindProperty(fields[i].Name));
             }
 
@@ -125,9 +151,8 @@ public class AnimationActionDrawer : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        if (!show) return 40;
-        if (property.objectReferenceValue != null)
-            if(!show) return 40;
-        return (fieldCount + 2) * 20;
+        if (!expandProperty || property.objectReferenceValue == null)
+            return ClosePropertyHeight;
+        return fieldCount * PropertyHeight + ClosePropertyHeight;
     }
 }

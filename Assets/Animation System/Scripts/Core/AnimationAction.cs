@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public abstract class AnimationActionBase : ScriptableObject
+public abstract class AnimationAction : ScriptableObject
 {
     public abstract void CallAction(Animator animator);
 }
