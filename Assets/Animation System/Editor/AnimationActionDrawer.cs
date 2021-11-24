@@ -56,7 +56,8 @@ public class AnimationActionDrawer : PropertyDrawer
 
     private int DrawPopup(Rect position)
     {
-        position.x += 7;
+        position.x += 117;
+        position.width -= 117;
         List<string> typesNames = actionsTypes.Select(type => type.Name).ToList();
         typesNames.Insert(0, "Not specified");
         return EditorGUI.Popup(position, selectedTypeIndex + 1, typesNames.ToArray()) - 1;
@@ -92,6 +93,12 @@ public class AnimationActionDrawer : PropertyDrawer
         property.objectReferenceValue = null;
     }
 
+    private void DuplicateAction(SerializedProperty property)
+    {
+        UnityEngine.Object createdAction = CreateAction(actionsTypes[selectedTypeIndex]);
+        property.objectReferenceValue = createdAction;
+    }
+
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         TryFindActionTypes();
@@ -107,7 +114,13 @@ public class AnimationActionDrawer : PropertyDrawer
             selectedTypeIndex = -1;
         }
         position.height = FieldHeight;
+        
+        if (GUI.Button(new Rect(position.x, position.y, 100, position.height), new GUIContent("Duplicate")))
+            if(property.objectReferenceValue != null) 
+                DuplicateAction(property);
+
         EditorGUI.indentLevel--;
+
         int newTypeIndex = DrawPopup(position);
 
         if (selectedTypeIndex != newTypeIndex)
@@ -121,11 +134,9 @@ public class AnimationActionDrawer : PropertyDrawer
         position.y += PropertyHeight;
 
         EditorGUI.indentLevel++;
-
-        expandProperty = EditorGUI.BeginFoldoutHeaderGroup(new Rect(position.x, position.y,
-            EditorGUIUtility.currentViewWidth * 0.2f * Mathf.Pow(EditorGUIUtility.currentViewWidth / 500, 0.5f), position.height), expandProperty, new GUIContent("Show"));
+        
+        expandProperty = EditorGUI.BeginFoldoutHeaderGroup(new Rect(position.x + 15, position.y, 81, position.height), expandProperty, new GUIContent("Show"));
         EditorGUI.PropertyField(position, property, new GUIContent(" "));
-
         if (property.objectReferenceValue == null) expandProperty = false;
 
         if (expandProperty && property.objectReferenceValue != null)

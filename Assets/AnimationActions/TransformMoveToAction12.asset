@@ -9,10 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3136cbc8628a3dc4eb1df334f4269f96, type: 3}
-  m_Name: TransformRotateToAction
+  m_Script: {fileID: 11500000, guid: f66df85bc202ea54e97d314f54d3e6a6, type: 3}
+  m_Name: TransformMoveToAction12
   m_EditorClassIdentifier: 
-  targetRotation: {x: 0, y: 0, z: 0}
+  targetPosition: {x: 0, y: 0, z: 0}
   time: 0
   curve:
     serializedVersion: 2
