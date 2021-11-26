@@ -12,5 +12,6 @@ public class AnimationSequence : ScriptableObject
 [Serializable]
 public class SequenceState
 {
-    public AnimationAction[] AnimationActions;
+    public AnimationActionBase[] AnimationActions;
+    public float StateDuration;
 }

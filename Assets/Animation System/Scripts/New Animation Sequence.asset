@@ -16,3 +16,4 @@ MonoBehaviour:
   - AnimationActions:
     - {fileID: 0}
     - {fileID: 0}
+    StateDuration: 4

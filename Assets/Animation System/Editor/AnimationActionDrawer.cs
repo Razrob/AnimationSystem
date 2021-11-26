@@ -8,16 +8,17 @@ using System.Reflection;
 using UnityEditorInternal;
 using System.IO;
 
-[CustomPropertyDrawer(typeof(AnimationAction), true)]
+[CustomPropertyDrawer(typeof(AnimationActionBase), true)]
 public class AnimationActionDrawer : PropertyDrawer
 {
+    private SubclassesTypesFinder<AnimationActionBase> actionTypesFinder = new SubclassesTypesFinder<AnimationActionBase>();
+    private AssetDataHandler assetDataHandler = new AssetDataHandler();
+
     private bool expandProperty;
     private int fieldCount;
     private bool inited;
 
     private int selectedTypeIndex;
-
-    private Type[] actionsTypes;
 
     //private const string actionsPath = "Source/Scripts/AnimationsActions";
     private const string actionsPath = "AnimationActions";
@@ -26,46 +27,14 @@ public class AnimationActionDrawer : PropertyDrawer
     private const float PropertyHeight = 20;
     private const float ClosePropertyHeight = 40;
 
-    private Type GetTargetSerializedType(object property)
-    {
-        for (int i = 0; i < actionsTypes.Length; i++)
-        {
-            try
-            {
-                Convert.ChangeType(property, actionsTypes[i]);
-                return actionsTypes[i];
-            }
-            catch { }
-        }
-
-        throw new KeyNotFoundException();
-    }
-
-    private UnityEngine.Object CreateAction(Type type)
-    {
-        AnimationAction action = ScriptableObject.CreateInstance(type) as AnimationAction;
-
-        string fileName = type.Name;
-        int fileCount = 0;
-        while (File.Exists($"{Application.dataPath}/{actionsPath}/{fileName}.asset"))
-            fileName += (++fileCount).ToString();
-
-        AssetDatabase.CreateAsset(action, $"Assets/{actionsPath}/{fileName}.asset");
-        return action;
-    }
 
     private int DrawPopup(Rect position)
     {
-        position.x += 7;
-        List<string> typesNames = actionsTypes.Select(type => type.Name).ToList();
+        position.x += 117;
+        position.width -= 117;
+        List<string> typesNames = actionTypesFinder.ActionsTypes.Select(type => type.Name).ToList();
         typesNames.Insert(0, "Not specified");
         return EditorGUI.Popup(position, selectedTypeIndex + 1, typesNames.ToArray()) - 1;
-    }
-
-    private void TryFindActionTypes()
-    {
-        if (actionsTypes == null)
-            actionsTypes = typeof(AnimationAction).Assembly.GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(AnimationAction))).ToArray();
     }
 
     private void TryInitialize(UnityEngine.Object property, Type targetType)
@@ -74,72 +43,91 @@ public class AnimationActionDrawer : PropertyDrawer
 
         inited = true;
         if (property != null)
-            selectedTypeIndex = actionsTypes.ToList().IndexOf(targetType);
+            selectedTypeIndex = actionTypesFinder.ActionsTypes.ToList().IndexOf(targetType);
     }
 
-    private void ReplaceAction(SerializedProperty property)
+    private SerializedProperty ReplaceAction(SerializedProperty property)
     {
-        UnityEngine.Object createdAction = CreateAction(actionsTypes[selectedTypeIndex]);
-        
+        UnityEngine.Object createdAction = assetDataHandler.CreateAsset(actionTypesFinder.ActionsTypes[selectedTypeIndex], actionsPath);
         if (property.objectReferenceValue != null)
-            NullifyAction(property);
+            assetDataHandler.DeleteAsset(property.objectReferenceValue);
         property.objectReferenceValue = createdAction;
+
+        return property;
     }
 
-    private void NullifyAction(SerializedProperty property)
+    private SerializedProperty RefreshProperty(SerializedProperty property, ref Rect position, Type targetType)
     {
-        AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(property.objectReferenceValue));
-        property.objectReferenceValue = null;
-    }
-
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-    {
-        TryFindActionTypes();
-
-        EditorGUI.BeginProperty(position, label, property);
-        Type targetType = GetTargetSerializedType(property.objectReferenceValue);
-
-        TryInitialize(property.objectReferenceValue, targetType);
-
         if (property.objectReferenceValue == null)
         {
             property.objectReferenceValue = null;
             selectedTypeIndex = -1;
         }
         position.height = FieldHeight;
+
+        if (GUI.Button(new Rect(position.x, position.y, 100, position.height), new GUIContent("Duplicate")))
+            if (property.objectReferenceValue != null)
+                property.objectReferenceValue = assetDataHandler.DuplicateAsset(targetType, property.objectReferenceValue, actionsPath);
+
         EditorGUI.indentLevel--;
+
         int newTypeIndex = DrawPopup(position);
 
         if (selectedTypeIndex != newTypeIndex)
         {
             selectedTypeIndex = newTypeIndex;
 
-            if (selectedTypeIndex > -1) ReplaceAction(property);
-            else NullifyAction(property);
+            if (selectedTypeIndex > -1) property = ReplaceAction(property);
+            else property.objectReferenceValue = assetDataHandler.DeleteAsset(property.objectReferenceValue);
         }
 
         position.y += PropertyHeight;
 
         EditorGUI.indentLevel++;
 
-        expandProperty = EditorGUI.BeginFoldoutHeaderGroup(new Rect(position.x, position.y,
-            EditorGUIUtility.currentViewWidth * 0.2f * Mathf.Pow(EditorGUIUtility.currentViewWidth / 500, 0.5f), position.height), expandProperty, new GUIContent("Show"));
-        EditorGUI.PropertyField(position, property, new GUIContent(" "));
+        return property;
+    }
 
-        if (property.objectReferenceValue == null) expandProperty = false;
+    private FieldInfo[] GetObjectFields(Type targetType)
+    {
+        FieldInfo[] fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .Where(field => field.GetCustomAttribute<SerializeField>() != null)
+                .ToArray();
+        return fields;
+    }
+
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        EditorGUI.BeginProperty(position, label, property);
+        Type targetType = actionTypesFinder.GetTargetSerializedType(property.objectReferenceValue);
+
+        TryInitialize(property.objectReferenceValue, targetType);
+        property = RefreshProperty(property, ref position, targetType);
+
+        expandProperty = EditorGUI.BeginFoldoutHeaderGroup(new Rect(position.x + 15, position.y, 81, position.height), expandProperty, new GUIContent("Show")) && property.objectReferenceValue != null;
+        
+        EditorGUI.PropertyField(position, property, new GUIContent(" "));
 
         if (expandProperty && property.objectReferenceValue != null)
         {
             SerializedObject serializedObject = new SerializedObject(property.objectReferenceValue);
             serializedObject.Update();
 
-            FieldInfo[] fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            fieldCount = fields.Length;
+            FieldInfo[] fields = GetObjectFields(targetType);
+            Type baseType = targetType.BaseType;
 
+            while (baseType != null && baseType != typeof(ScriptableObject))
+            {
+                fields = fields.Concat(GetObjectFields(baseType)).ToArray();
+                baseType = baseType.BaseType;
+            }
+
+            fieldCount = fields.Length;
             for (int i = 0; i < fields.Length; i++)
             {
                 position.y += PropertyHeight;
-                EditorGUI.PropertyField(position, serializedObject.FindProperty(fields[i].Name));
+                SerializedProperty serializedProperty = serializedObject.FindProperty(fields[i].Name);
+                if(serializedProperty != null) EditorGUI.PropertyField(position, serializedProperty);
             }
 
             serializedObject.ApplyModifiedPropertiesWithoutUndo();

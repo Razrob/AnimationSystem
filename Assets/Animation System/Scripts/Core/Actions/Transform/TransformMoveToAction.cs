@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//[CreateAssetMenu(menuName = "Animation system/Create TrasnsformMoveTo action")]
 public class TransformMoveToAction : TransformAction
 {
     [SerializeField] private Vector3 targetPosition;

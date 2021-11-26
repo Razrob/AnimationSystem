@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//[CreateAssetMenu(menuName = "Animation system/Create TransformRotateTo action")]
 public class TransformRotateToAction : TransformAction
 {
     [SerializeField] private Vector3 targetRotation;
