@@ -9,11 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73e2f1ba57e987847b91cc3a2d067203, type: 3}
-  m_Name: New Animation Sequence
+  m_Script: {fileID: 11500000, guid: f66df85bc202ea54e97d314f54d3e6a6, type: 3}
+  m_Name: TransformMoveToAction12
   m_EditorClassIdentifier: 
-  States:
-  - AnimationActions:
-    - {fileID: 11400000, guid: 39730128d86dac645af56150265df170, type: 2}
-    - {fileID: 0}
-    StateDuration: 4
+  targetPosition: {x: 0, y: 0, z: 0}
+  time: 0
+  curve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
