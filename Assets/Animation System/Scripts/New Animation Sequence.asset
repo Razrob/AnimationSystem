@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   States:
   - AnimationActions:
-    - {fileID: 11400000, guid: 39730128d86dac645af56150265df170, type: 2}
+    - {fileID: 0}
     - {fileID: 0}
     StateDuration: 4

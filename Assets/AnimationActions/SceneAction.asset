@@ -9,14 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f66df85bc202ea54e97d314f54d3e6a6, type: 3}
-  m_Name: TransformMoveToAction12
+  m_Script: {fileID: 11500000, guid: 7535b82233821f94fa2cfaebe88968fb, type: 3}
+  m_Name: SceneAction
   m_EditorClassIdentifier: 
-  targetPosition: {x: 0, y: 0, z: 0}
-  time: 0
-  curve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  <CallTimeOffcet>k__BackingField: 0
+  actionIdentifier: 
