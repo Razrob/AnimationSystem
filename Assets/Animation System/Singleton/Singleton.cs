@@ -4,7 +4,7 @@ using Object = UnityEngine.Object;
 
 public abstract class Singleton<T> where T : Component
 {
-    private static object empty;
+    private static object empty = new object();
 
     private static T instance;
     public static T Instance => GetInstance();

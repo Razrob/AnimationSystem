@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TransformOffcetMoveToAction : TransformAction
+
+public class TransformOffcetMoveAction : TransformAction
 {
     [SerializeField] private Vector3 targetOffcet;
     [SerializeField] private float time;

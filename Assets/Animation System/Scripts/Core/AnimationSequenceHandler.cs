@@ -5,19 +5,19 @@ using UnityEngine;
 
 public class AnimationSequenceHandler
 {
-    public static void PlaySequence(AnimationSequence animationSequence, Animator animator)
+    public static void PlaySequence(AnimationSequence animationSequence, Transform transform)
     {
         Sequence sequence = DOTween.Sequence();
         for (int i = 0; i < animationSequence.States.Length; i++)
-            AddSequenceElements(sequence, animator, animationSequence.States[i]);
+            AddSequenceElements(sequence, transform, animationSequence.States[i]);
         sequence.Play();
     }
 
-    private static void AddSequenceElements(Sequence sequence, Animator animator, SequenceState animationState)
+    private static void AddSequenceElements(Sequence sequence, Transform transform, SequenceState animationState)
     {
         foreach (AnimationActionBase action in animationState.AnimationActions)
             sequence.InsertCallback(sequence.Duration() + animationState.StateDuration * action.CallTimeOffcet, 
-                () => action.CallAction(animator));
+                () => action.CallAction(transform));
 
         sequence.AppendInterval(animationState.StateDuration);
     }

@@ -9,7 +9,12 @@ public abstract class AnimatorAction : AnimationActionBase
     private int? propertyHash;
     public int PropertyHash => GetHash();
 
-    public override abstract void CallAction(Animator animator);
+    public sealed override void CallAction(Transform transform)
+    {
+        if (transform.TryGetComponent(out Animator animator))
+            CallAction(animator);
+    }
+    public abstract void CallAction(Animator animator);
 
     private int GetHash()
     {

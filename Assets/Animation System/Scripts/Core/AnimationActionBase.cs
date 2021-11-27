@@ -7,5 +7,5 @@ public abstract class AnimationActionBase : ScriptableObject
 {
     [field: SerializeField] [field: Range(0, 1)] public float CallTimeOffcet { get; private set; }
 
-    public abstract void CallAction(Animator animator);
+    public abstract void CallAction(Transform transform);
 }

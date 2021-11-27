@@ -4,6 +4,5 @@ using UnityEngine;
 
 public abstract class TransformAction : AnimationActionBase
 {
-    public sealed override void CallAction(Animator animator) => CallAction(animator.transform);
-    public abstract void CallAction(Transform transform);
+    public override abstract void CallAction(Transform transform);
 }

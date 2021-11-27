@@ -7,7 +7,8 @@ public class SceneActionsRepository : MonoBehaviour
     
     public void AddSceneAction(AnimationSceneActionBase sceneActionBase)
     {
-        if (sceneActionBase != null) sceneActions.Add(sceneActionBase);
+        if (sceneActionBase != null) 
+            sceneActions.Add(sceneActionBase);
     }
 
     public void CallAction(string actionID) =>
