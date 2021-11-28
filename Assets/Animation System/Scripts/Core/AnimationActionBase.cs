@@ -5,7 +5,8 @@ using System;
 
 public abstract class AnimationActionBase : ScriptableObject
 {
-    [field: SerializeField] [field: Range(0, 1)] public float CallTimeOffcet { get; private set; }
+    [SerializeField] [Range(0, 1)] protected float callTimeOffcet;
+    public float CallTimeOffcet => callTimeOffcet;
 
     public abstract void CallAction(Transform transform);
 }

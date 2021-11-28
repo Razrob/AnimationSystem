@@ -15,6 +15,8 @@ public class AnimationSequenceHandler
 
     private static void AddSequenceElements(Sequence sequence, Transform transform, SequenceState animationState)
     {
+        sequence.AppendInterval(animationState.StateDelay);
+
         foreach (AnimationActionBase action in animationState.AnimationActions)
             sequence.InsertCallback(sequence.Duration() + animationState.StateDuration * action.CallTimeOffcet, 
                 () => action.CallAction(transform));

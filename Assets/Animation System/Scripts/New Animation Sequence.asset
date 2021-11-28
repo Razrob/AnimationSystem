@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: New Animation Sequence
   m_EditorClassIdentifier: 
   States:
-  - AnimationActions:
-    - {fileID: 0}
-    - {fileID: 11400000, guid: 3ef40e7b3ffa7f7409d55ce2a9230045, type: 2}
-    StateDuration: 4
+  - AnimationActions: []
+    StateDelay: 0
+    StateDuration: 0

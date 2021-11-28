@@ -114,13 +114,6 @@ public class AnimationActionDrawer : PropertyDrawer
             serializedObject.Update();
 
             FieldInfo[] fields = GetObjectFields(targetType);
-            Type baseType = targetType.BaseType;
-
-            while (baseType != null && baseType != typeof(ScriptableObject))
-            {
-                fields = fields.Concat(GetObjectFields(baseType)).ToArray();
-                baseType = baseType.BaseType;
-            }
 
             fieldCount = fields.Length;
             for (int i = 0; i < fields.Length; i++)

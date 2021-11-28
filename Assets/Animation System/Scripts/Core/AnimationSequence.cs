@@ -13,5 +13,6 @@ public class AnimationSequence : ScriptableObject
 public class SequenceState
 {
     public AnimationActionBase[] AnimationActions;
+    public float StateDelay;
     public float StateDuration;
 }
